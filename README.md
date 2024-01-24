@@ -4,7 +4,9 @@
 
 ![AppSync GraphQL example AWS architecture diagram](./examples/diagrams/AppSyncGraphQLDynamoDBExample.template.svg)
 
-![S3 Trigger example AWS architecture diagram](./examples/diagrams/s3Trigger.template.svg)
+![S3 Trigger example AWS architecture diagram](./examples/diagrams/s3trigger.template.svg)
+
+![Serverless backend stack example AWS architecture diagram](./examples/diagrams/ServerlessBackendStack.template.svg)
 
 ## Install
 
