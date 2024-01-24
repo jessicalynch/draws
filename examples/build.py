@@ -29,14 +29,15 @@ def build_from_templates():
 
 def build_manually():
     with Diagram(title="My AWS Stack") as D:
-        lambda_node = Elem("AWS::Lambda::Function", "Lambda1")
-        s3_node = Elem("AWS::S3::Bucket", "Bucket1")
-        ec2_node = Elem("AWS::EC2::Instance", "EC2 Instance")
+        rest_api = Elem("AWS::ApiGateway::RestApi", "Rest API")
+        lambda_func = Elem("AWS::Lambda::Function", "Lambda")
+        bucket = Elem("AWS::S3::Bucket", "Bucket")
 
-        lambda_node >> s3_node
-        lambda_node << s3_node
-        ec2_node >> s3_node
-        s3_node >> ec2_node
+        rest_api >> lambda_func
+        rest_api << lambda_func
+        lambda_func >> bucket
+
+        D.to_svg()
 
         D.to_svg(filename=curr_dir / "diagrams" / "manual.svg")
 
