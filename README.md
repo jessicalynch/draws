@@ -55,4 +55,8 @@ if __name__ == "__main__":
         D.to_svg()
 ```
 
+<div style="max-width: 400px">
+
 ![Example AWS architecture diagram created manually](./examples/diagrams/manual.svg)
+
+</div>
