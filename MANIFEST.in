@@ -1,0 +1,2 @@
+include src/assets/*.svg
+include src/assets/*.html

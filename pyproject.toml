@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "draws"
+version = "1.0.0-alpha.1"
+description = "Lightweight AWS Diagram Automation"
+readme = "README.md"
+authors = [{ name = "Jessica Lynch" }]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Framework :: AWS CDK",
+    "Topic :: Documentation",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = []
+
+[project.urls]
+repository = "https://github.com/jessicalynch/draws"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4.2", "black>=23.9.1", "flake8>=7.0.0"]
+
+[project.license]
+text = "MIT"
+
+[tool.project.packaging]
+include = ["src"]

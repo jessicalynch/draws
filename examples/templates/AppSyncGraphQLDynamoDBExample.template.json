@@ -1,0 +1,476 @@
+{
+ "Resources": {
+  "ItemsApi": {
+   "Type": "AWS::AppSync::GraphQLApi",
+   "Properties": {
+    "AuthenticationType": "API_KEY",
+    "Name": "items-api"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AppSyncGraphQLDynamoDBExample/ItemsApi"
+   }
+  },
+  "ItemsApiKey": {
+   "Type": "AWS::AppSync::ApiKey",
+   "Properties": {
+    "ApiId": {
+     "Fn::GetAtt": [
+      "ItemsApi",
+      "ApiId"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AppSyncGraphQLDynamoDBExample/ItemsApiKey"
+   }
+  },
+  "ItemsSchema": {
+   "Type": "AWS::AppSync::GraphQLSchema",
+   "Properties": {
+    "ApiId": {
+     "Fn::GetAtt": [
+      "ItemsApi",
+      "ApiId"
+     ]
+    },
+    "Definition": "                type items {\n                    itemsId: ID!\n                    name: String\n                }\n                type Paginateditems {\n                    items: [items!]!\n                    nextToken: String\n                }\n                type Query {\n                    all(limit: Int, nextToken: String): Paginateditems!\n                    getOne(itemsId: ID!): items\n                }\n                type Mutation {\n                    save(name: String!): items\n                    delete(itemsId: ID!): items\n                }\n                type Schema {\n                    query: Query\n                    mutation: Mutation\n                }"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AppSyncGraphQLDynamoDBExample/ItemsSchema"
+   }
+  },
+  "ItemsTable5AAC2C46": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "itemsId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "itemsId",
+      "KeyType": "HASH"
+     }
+    ],
+    "StreamSpecification": {
+     "StreamViewType": "NEW_IMAGE"
+    },
+    "TableName": "items"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AppSyncGraphQLDynamoDBExample/ItemsTable/Resource"
+   }
+  },
+  "ItemsDynamoDBRole7D2E3F6D": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "appsync.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonDynamoDBFullAccess"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AppSyncGraphQLDynamoDBExample/ItemsDynamoDBRole/Resource"
+   }
+  },
+  "ItemsDataSource": {
+   "Type": "AWS::AppSync::DataSource",
+   "Properties": {
+    "ApiId": {
+     "Fn::GetAtt": [
+      "ItemsApi",
+      "ApiId"
+     ]
+    },
+    "DynamoDBConfig": {
+     "AwsRegion": {
+      "Ref": "AWS::Region"
+     },
+     "TableName": {
+      "Ref": "ItemsTable5AAC2C46"
+     }
+    },
+    "Name": "ItemsDynamoDataSource",
+    "ServiceRoleArn": {
+     "Fn::GetAtt": [
+      "ItemsDynamoDBRole7D2E3F6D",
+      "Arn"
+     ]
+    },
+    "Type": "AMAZON_DYNAMODB"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AppSyncGraphQLDynamoDBExample/ItemsDataSource"
+   }
+  },
+  "GetOneQueryResolver": {
+   "Type": "AWS::AppSync::Resolver",
+   "Properties": {
+    "ApiId": {
+     "Fn::GetAtt": [
+      "ItemsApi",
+      "ApiId"
+     ]
+    },
+    "DataSourceName": "ItemsDynamoDataSource",
+    "FieldName": "getOne",
+    "RequestMappingTemplate": "            {\n                \"version\": \"2017-02-28\",\n                \"operation\": \"GetItem\",\n                \"key\": {\n                \"itemsId\": $util.dynamodb.toDynamoDBJson($ctx.args.itemsId)\n                }\n            }",
+    "ResponseMappingTemplate": "$util.toJson($ctx.result)",
+    "TypeName": "Query"
+   },
+   "DependsOn": [
+    "ItemsSchema"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AppSyncGraphQLDynamoDBExample/GetOneQueryResolver"
+   }
+  },
+  "GetAllQueryResolver": {
+   "Type": "AWS::AppSync::Resolver",
+   "Properties": {
+    "ApiId": {
+     "Fn::GetAtt": [
+      "ItemsApi",
+      "ApiId"
+     ]
+    },
+    "DataSourceName": "ItemsDynamoDataSource",
+    "FieldName": "all",
+    "RequestMappingTemplate": "            {\n                \"version\": \"2017-02-28\",\n                \"operation\": \"Scan\",\n                \"limit\": $util.defaultIfNull($ctx.args.limit, 20),\n                \"nextToken\": $util.toJson($util.defaultIfNullOrEmpty($ctx.args.nextToken, null))\n            }",
+    "ResponseMappingTemplate": "$util.toJson($ctx.result)",
+    "TypeName": "Query"
+   },
+   "DependsOn": [
+    "ItemsSchema"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AppSyncGraphQLDynamoDBExample/GetAllQueryResolver"
+   }
+  },
+  "SaveMutationResolver": {
+   "Type": "AWS::AppSync::Resolver",
+   "Properties": {
+    "ApiId": {
+     "Fn::GetAtt": [
+      "ItemsApi",
+      "ApiId"
+     ]
+    },
+    "DataSourceName": "ItemsDynamoDataSource",
+    "FieldName": "save",
+    "RequestMappingTemplate": "            {\n                \"version\": \"2017-02-28\",\n                \"operation\": \"PutItem\",\n                \"key\": {\n                    \"itemsId\": { \"S\": \"$util.autoId()\" }\n                },\n                \"attributeValues\": {\n                    \"name\": $util.dynamodb.toDynamoDBJson($ctx.args.name)\n                }\n            }",
+    "ResponseMappingTemplate": "$util.toJson($ctx.result)",
+    "TypeName": "Mutation"
+   },
+   "DependsOn": [
+    "ItemsSchema"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AppSyncGraphQLDynamoDBExample/SaveMutationResolver"
+   }
+  },
+  "DeleteMutationResolver": {
+   "Type": "AWS::AppSync::Resolver",
+   "Properties": {
+    "ApiId": {
+     "Fn::GetAtt": [
+      "ItemsApi",
+      "ApiId"
+     ]
+    },
+    "DataSourceName": "ItemsDynamoDataSource",
+    "FieldName": "delete",
+    "RequestMappingTemplate": "            {\n                \"version\": \"2017-02-28\",\n                \"operation\": \"DeleteItem\",\n                \"key\": {\n                \"itemsId\": $util.dynamodb.toDynamoDBJson($ctx.args.itemsId)\n                }\n            }",
+    "ResponseMappingTemplate": "$util.toJson($ctx.result)",
+    "TypeName": "Mutation"
+   },
+   "DependsOn": [
+    "ItemsSchema"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AppSyncGraphQLDynamoDBExample/DeleteMutationResolver"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/02PzQrCMBCEn8V7Gm19AqngQQ/aepdtGulq80OSKiHk3U1aRE8z8y27w1a0rCq6WcHbFqx/FiN2NLQO2JMkdAugtfWS0VDf5cGAHi6nnUaSUpIj9+THWzZwARnswUGrJsN4Tg23anxxE0nvJQjVp4YrdOM8nE0kCIKGRi0sa4wk7/3f+PpayR4dKhnJ2btByfWWlmX64WERCzNJh4LTZtEPmy2d0uAAAAA="
+   },
+   "Metadata": {
+    "aws:cdk:path": "AppSyncGraphQLDynamoDBExample/CDKMetadata/Default"
+   },
+   "Condition": "CDKMetadataAvailable"
+  }
+ },
+ "Conditions": {
+  "CDKMetadataAvailable": {
+   "Fn::Or": [
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "af-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ca-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-northwest-1"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-3"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "il-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "me-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "me-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "sa-east-1"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-west-2"
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}
