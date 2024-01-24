@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 
 [project]
 name = "draws"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 description = "Lightweight AWS Diagram Automation"
 readme = "README.md"
 authors = [{ name = "Jessica Lynch" }]
