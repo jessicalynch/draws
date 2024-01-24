@@ -37,8 +37,6 @@ def build_manually():
         rest_api << lambda_func
         lambda_func >> bucket
 
-        D.to_svg()
-
         D.to_svg(filename=curr_dir / "diagrams" / "manual.svg")
 
 

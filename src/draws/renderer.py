@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import base64
 import math
+import mimetypes
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Union
@@ -47,6 +49,12 @@ class DiagramRenderer:
             defs = defs_file.read()
             svg_defs += defs
             defs_file.close()
+
+        image_defs = self._get_image_defs(D.elems)
+        for img_path, encoded_img in image_defs.items():
+            svg_defs += f'<pattern id="{os.path.basename(img_path)}" patternUnits="objectBoundingBox" width="100%" height="100%">'
+            svg_defs += f'<image href="{encoded_img}" x="0" y="0" width="{D.icon_width}" height="{D.icon_height}"/>'
+            svg_defs += "</pattern>"
         svg_defs += "</defs>"
 
         svg_elements = [
@@ -55,8 +63,8 @@ class DiagramRenderer:
             svg_defs,
         ]
 
-        # Draw connections
         for elem in D.elems:
+            # Draw connections
             for connected_elem in elem.connections:
                 path_coords = self._get_path_coords(
                     start_elem=elem, end_elem=connected_elem, layers=layers
@@ -87,14 +95,14 @@ class DiagramRenderer:
                     + f' stroke-width="{D.stroke_width}" fill="none" />'
                     + f"{arrowhead_svg}</g>"
                 )
-        # Draw elems and labels
-        for elem in D.elems:
+            # Draw Icons
+            icon_id = os.path.basename(elem.icon)
             icon_x = elem.x - D.icon_width / 2
             icon_y = elem.y - D.icon_height / 2
             svg_elements.append(
-                f'<image href="{elem.icon}" x="{icon_x}" y="{icon_y}"'
-                + f' width="{D.icon_width}" height="{D.icon_height}" />'
+                f'<rect x="{icon_x}" y="{icon_y}" width="{D.icon_width}" height="{D.icon_height}" fill="url(#{icon_id})" />'
             )
+
             wrapped_lines = elem.wrapped_label.split("\n")
             text_x = elem.x
             text_y = elem.y + D.icon_height / 2 + D.label_margin
@@ -112,6 +120,7 @@ class DiagramRenderer:
 
             label_height = D.label_font_size * len(wrapped_lines) + 2 * D.label_margin
 
+            # Draw label
             for line_index, line in enumerate(elem.wrapped_label.split("\n")):
                 text_y = (
                     elem.y
@@ -181,6 +190,20 @@ class DiagramRenderer:
         width = max_x - min_x
         height = max_y - min_y
         return min_x, min_y, width, height
+
+    def _get_image_defs(self, elems):
+        unique_images = set(elem.icon for elem in elems)
+        image_defs = {}
+        for filename in unique_images:
+            mime_type, _ = mimetypes.guess_type(filename)
+            icon_path = os.path.join(get_assets_path(), "icons", filename)
+            if not os.path.exists(icon_path):
+                raise ValueError(f"Icon asset not found: {filename}")
+
+            with open(icon_path, "rb") as icon_file:
+                encoded_string = base64.b64encode(icon_file.read()).decode()
+                image_defs[filename] = f"data:{mime_type};base64,{encoded_string}"
+        return image_defs
 
     def _offset_coords(
         self, coords: List[List[int]], direction: str, offset_amount: int

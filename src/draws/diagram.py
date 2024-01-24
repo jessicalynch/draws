@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import base64
-import mimetypes
-import os
 import textwrap
 import uuid
 from pathlib import Path
@@ -42,11 +39,6 @@ def get_current_diagram() -> Diagram:
     return current_diagram
 
 
-def get_assets_path() -> Path:
-    curr_dir = Path(os.path.abspath(os.path.dirname(__file__)))
-    return os.path.join(curr_dir.parent, "assets")
-
-
 class Elem:
     _counter = 0
 
@@ -58,7 +50,7 @@ class Elem:
         self.x = 0
         self.y = 0
         self.connections = []
-        self.icon = self._get_icon_path(resource_type)
+        self.icon = self._get_icon(resource_type)
         self.color = self._get_color(resource_type)
         self.diagram = get_current_diagram()
         if self.diagram is not None:
@@ -114,11 +106,11 @@ class Elem:
                 if self.diagram is not None:
                     self.diagram.graph.add_edge(u=self.id, v=other.id)
 
-    def set_position(self, x, y):
+    def set_position(self, x: int, y: int):
         self.x = x
         self.y = y
 
-    def _get_icon_path(self, resource_type):
+    def _get_icon(self, resource_type: str) -> str:
         resource_type = resource_type.split("::")
         icon_filename = icon_mapping.get("-".join(resource_type))
         if not icon_filename:
@@ -126,15 +118,7 @@ class Elem:
         if not icon_filename:
             icon_filename = DEFAULT_ICON_FILE
 
-        icon_path = os.path.join(get_assets_path(), "icons", icon_filename)
-        mime_type, _ = mimetypes.guess_type(icon_path)
-        try:
-            with open(icon_path, "rb") as icon_file:
-                encoded_string = base64.b64encode(icon_file.read()).decode()
-        except FileNotFoundError:
-            raise ValueError(f"Icon asset not found: {icon_filename}")
-
-        return f"data:{mime_type};base64,{encoded_string}"
+        return icon_filename
 
     def _get_color(self, resource_type):
         resource_type_parts = resource_type.split("::")
@@ -189,7 +173,7 @@ class Diagram:
         self.graph: Graph = Graph()
         self.elems: List[Elem] = []
 
-        self.id = f"diagram_{uuid.uuid4().hex}"
+        self.id = f"diagram_{uuid.uuid4().hex[:6]}"
 
     def __enter__(self):
         set_current_diagram(self)
