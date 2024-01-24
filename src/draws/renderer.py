@@ -52,8 +52,14 @@ class DiagramRenderer:
 
         image_defs = self._get_image_defs(D.elems)
         for img_path, encoded_img in image_defs.items():
-            svg_defs += f'<pattern id="{os.path.basename(img_path)}" patternUnits="objectBoundingBox" width="100%" height="100%">'
-            svg_defs += f'<image href="{encoded_img}" x="0" y="0" width="{D.icon_width}" height="{D.icon_height}"/>'
+            svg_defs += (
+                f'<pattern id="{os.path.basename(img_path)}"'
+                + ' patternUnits="objectBoundingBox" width="100%" height="100%">'
+            )
+            svg_defs += (
+                f'<image href="{encoded_img}" x="0" y="0"'
+                + f' width="{D.icon_width}" height="{D.icon_height}"/>'
+            )
             svg_defs += "</pattern>"
         svg_defs += "</defs>"
 
@@ -95,12 +101,14 @@ class DiagramRenderer:
                     + f' stroke-width="{D.stroke_width}" fill="none" />'
                     + f"{arrowhead_svg}</g>"
                 )
-            # Draw Icons
+
+            # Draw icons
             icon_id = os.path.basename(elem.icon)
             icon_x = elem.x - D.icon_width / 2
             icon_y = elem.y - D.icon_height / 2
             svg_elements.append(
-                f'<rect x="{icon_x}" y="{icon_y}" width="{D.icon_width}" height="{D.icon_height}" fill="url(#{icon_id})" />'
+                f'<rect x="{icon_x}" y="{icon_y}" width="{D.icon_width}"'
+                + f' height="{D.icon_height}" fill="url(#{icon_id})" />'
             )
 
             wrapped_lines = elem.wrapped_label.split("\n")
@@ -109,7 +117,7 @@ class DiagramRenderer:
             label_width = elem.wrapped_label_width
             label_height = D.label_font_size * len(wrapped_lines) + 2 * D.label_margin
 
-            # Draw white rectangle behind the label
+            # Draw label background
             rect_x = text_x - label_width / 2
             rect_y = elem.y + D.icon_height / 2 + D.label_margin - D.label_margin
 
