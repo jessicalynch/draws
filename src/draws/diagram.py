@@ -1,31 +1,32 @@
 from __future__ import annotations
 
+import importlib
+import os
 import textwrap
 import uuid
 from pathlib import Path
-from typing import List, Literal, Tuple, Union
+from typing import Any, Dict, List, Literal, Tuple, Union
 
 from .colors import color_mapping
-from .constants import (
-    ARROW_LENGTH,
-    ARROW_PADDING,
-    DEFAULT_DIAGRAM_PADDING,
-    DEFAULT_HORIZONTAL_SPACING,
-    DEFAULT_ICON_FILE,
-    DEFAULT_STROKE_COLOR,
-    DEFAULT_VERTICAL_SPACING,
-    ICON_SIZE,
-    LABEL_FONT_SIZE,
-    LABEL_MARGIN,
-    STROKE_WIDTH,
-    TITLE_FONT_SIZE,
-    TITLE_MARGIN,
-)
 from .graph import Graph
 from .icons import icon_mapping
 from .renderer import DiagramRenderer
 from .template import Template
 
+DEFAULT_STROKE_COLOR = "#333"
+STROKE_WIDTH = 2
+ICON_SIZE = 64
+TITLE_FONT_SIZE = 21
+LABEL_FONT_SIZE = 13
+DEFAULT_DIAGRAM_PADDING = ICON_SIZE // 3 * 2
+TITLE_MARGIN = ICON_SIZE
+LABEL_MARGIN = 4
+ARROW_LENGTH = 15
+ARROW_PADDING = ARROW_LENGTH * 1.2
+DEFAULT_VERTICAL_SPACING: int = (ICON_SIZE + LABEL_MARGIN) * 3
+DEFAULT_HORIZONTAL_SPACING = ICON_SIZE * 3.5
+SVG_DEFS_PATH = "assets/svg_defs"
+DEFAULT_ICON_FILE = "Arch_AWS-Cloud-Development-Kit_64.svg"
 LabelSource = Literal["id", "type"]
 current_diagram = None
 
@@ -115,6 +116,7 @@ class Elem:
         icon_filename = icon_mapping.get("-".join(resource_type))
         if not icon_filename:
             icon_filename = icon_mapping.get("-".join(resource_type[:-1]))
+
         if not icon_filename:
             icon_filename = DEFAULT_ICON_FILE
 
@@ -185,6 +187,7 @@ class Diagram:
     def to_svg(self, filename: Union[str, Path] = None):
         renderer = DiagramRenderer(self)
         renderer.render(filename=filename)
+        print(f"Diagram saved to: {filename}")
 
     def add_elem(self, elem: Elem):
         self.elems.append(elem)
@@ -217,14 +220,40 @@ class Diagram:
     @classmethod
     def from_template(
         cls,
-        filename: Union[str, Path],
+        src: Union[Dict[str, Any], str, Path],
         title: str = "",
         label_source: LabelSource = "id",
     ) -> "Diagram":
-        template = Template(filename=filename)
+        template = Template(template_source=src)
         diagram = cls(title=title)
         cls._auto_generate(
             diagram=diagram, template=template, label_source=label_source
         )
 
         return diagram
+
+
+class Diagrams:
+    @staticmethod
+    def of(app, directory: str = ""):
+        try:
+            importlib.import_module("aws_cdk")
+        except ImportError:
+            try:
+                importlib.import_module("aws_cdk.core")
+            except ImportError:
+                raise ImportError("AWS CDK is not installed.")
+
+        if not hasattr(app, "synth") or not hasattr(app, "node"):
+            raise AttributeError(
+                "The provided app does not have the required methods ('synth', 'node')."
+            )
+
+        cloud_assembly = app.synth()
+        for stack_artifact in cloud_assembly.stacks:
+            template_dict = stack_artifact.template
+            D = Diagram.from_template(src=template_dict)
+            svg_filename = os.path.join(
+                directory, f"{stack_artifact.stack_name}.diagram.svg"
+            )
+            D.to_svg(filename=svg_filename)

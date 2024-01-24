@@ -1,14 +1,17 @@
 """Maps AWS resource types to SVG icons."""
 
+# TODO: refactor to support aliases
 icon_mapping = {
     "AWS-Lambda-Function": "Res_AWS-Lambda_Lambda-Function_48.svg",
     "AWS-ApiGateway": "Arch_Amazon-API-Gateway_64.svg",
+    "AWS-ApiGatewayV2": "Arch_Amazon-API-Gateway_64.svg",
     "AWS-EC2": "Arch_Amazon-EC2_64.svg",
     "AWS-Kinesis": "Arch_Amazon-Kinesis_64.svg",
     "AWS-KinesisFirehose": "Arch_Amazon-Kinesis-Data-Firehose_64.svg",
+    "AWS-S3-Bucket": "Res_Amazon-Simple-Storage-Service_Bucket_48.svg",
     "AWS-S3": "Arch_Amazon-Simple-Storage-Service_64.svg",
     "Custom-S3BucketNotifications": "Arch_Amazon-Simple-Storage-Service_64.svg",
-    "AWS-S3-Bucket": "Res_Amazon-Simple-Storage-Service_Bucket_48.svg",
+    "Custom-S3AutoDeleteObjects": "Arch_Amazon-Simple-Storage-Service_64.svg",
     "AWS-Cloud-Development-Kit": "Arch_AWS-Cloud-Development-Kit_64.svg",
     "AWS-IAM": "Arch_AWS-Identity-and-Access-Management_64.svg",
     "AWS-IAM-Role": "Res_AWS-Identity-Access-Management_Role_48.svg",

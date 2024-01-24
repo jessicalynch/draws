@@ -5,18 +5,28 @@ from typing import Any, Dict, List, Union
 
 
 class Template:
-    def __init__(self, filename: Union[str, Path]):
-        with open(filename, "r") as file:
-            self.template = json.load(file)
-        self._resources = self.template.get("Resources", {})
-        self._dependencies = self.find_dependencies()
+    def __init__(self, template_source: Union[Dict[str, Any], str, Path]):
+        if isinstance(template_source, dict):
+            self.template = template_source
+        elif isinstance(template_source, (str, Path)):
+            with open(template_source, "r") as file:
+                self.template = json.load(file)
+        else:
+            raise TypeError("template_source must be a dictionary or a file path")
+
+        self._resources = None
+        self._dependencies = None
 
     @property
     def resources(self) -> Dict[str, Any]:
+        if self._resources is None:
+            self._resources = self.template.get("Resources", {})
         return self._resources
 
     @property
     def dependencies(self) -> Dict[str, Dict[str, Any]]:
+        if self._dependencies is None:
+            self._dependencies = self.find_dependencies()
         return self._dependencies
 
     def find_dependencies(self) -> Dict[str, Dict[str, Any]]:

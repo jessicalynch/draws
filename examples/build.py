@@ -7,8 +7,7 @@ curr_dir = Path(os.path.abspath(os.path.dirname(__file__)))
 
 
 def build_from_templates():
-    template_dir_name = "templates"
-    templates_dir = curr_dir / template_dir_name
+    templates_dir = curr_dir / "templates"
 
     if templates_dir.is_dir():
         for file in templates_dir.iterdir():
@@ -16,15 +15,16 @@ def build_from_templates():
                 title = file.stem.replace("_", " ").replace(".template", "").title()
 
                 D = Diagram.from_template(
-                    filename=file,
+                    src=file,
                     title=title,
                 )
                 D.to_svg(
-                    filename=curr_dir / "diagrams" / f"{file.stem}.svg",
+                    filename=curr_dir
+                    / "output"
+                    / f"{file.stem.replace('template', 'diagram')}.svg",
                 )
-                print(f"Diagram generated for {file}")
     else:
-        print(f"No '{template_dir_name}' directory found in {curr_dir}")
+        print(f"'{templates_dir}' not found")
 
 
 def build_manually():
@@ -37,7 +37,7 @@ def build_manually():
         rest_api << lambda_func
         lambda_func >> bucket
 
-        D.to_svg(filename=curr_dir / "diagrams" / "manual.svg")
+        D.to_svg(filename=curr_dir / "output" / "manual.svg")
 
 
 if __name__ == "__main__":
