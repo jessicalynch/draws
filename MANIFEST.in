@@ -1,2 +1,2 @@
-include src/assets/*.svg
-include src/assets/*.html
+include src/assets/**/*.svg
+include src/assets/**/*.html
