@@ -1,5 +1,8 @@
 [flake8]
-exclude = .venv
+exclude = 
+    .venv
+    dist
 max-line-length = 88
 per-file-ignores =
     src/draws/icons.py: E501
+
