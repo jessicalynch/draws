@@ -1,0 +1,43 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-publish:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+
+      - name: Install build and linting tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+          pip install -e .[dev]
+
+      - name: Check code formatting with Black
+        run: black --check src
+
+      - name: Run Flake8
+        run: flake8 src
+
+      - name: Build the package
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          verify-metadata: true
+          skip-existing: true
