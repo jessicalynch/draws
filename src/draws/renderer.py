@@ -14,11 +14,6 @@ if TYPE_CHECKING:
     from .diagram import Diagram, Elem
 
 
-def get_assets_path() -> Path:
-    curr_dir = Path(os.path.abspath(os.path.dirname(__file__)))
-    return os.path.join(curr_dir.parent, "assets")
-
-
 class DiagramRenderer:
     def __init__(self, diagram: "Diagram"):
         self.diagram = diagram
@@ -30,9 +25,17 @@ class DiagramRenderer:
     def render(self, filename: Union[str, Path] = None):
         svg_content = self._get_svg_elements(D=self.diagram)
         if not filename:
-            filename = f"{self.diagram.title or self.diagram.id}.svg"
+            filename = f"{self.diagram.title or self.diagram.id}.diagram.svg"
+
+        filename = Path(filename)
+        filename.parent.mkdir(parents=True, exist_ok=True)
+
         with open(filename, "w") as file:
             file.write(svg_content)
+
+    def _get_assets_path(self) -> Path:
+        curr_dir = Path(os.path.abspath(os.path.dirname(__file__)))
+        return os.path.join(curr_dir.parent, "assets")
 
     def _get_svg_elements(self, D: "Diagram"):
         layout = Layout(graph=D.graph, strategy=SugiyamaStrategy())
@@ -44,7 +47,9 @@ class DiagramRenderer:
 
         svg_defs = "<defs>"
         for defs_filename in ["font.html", "style.html"]:
-            defs_file_path = os.path.join(get_assets_path(), "svg_defs", defs_filename)
+            defs_file_path = os.path.join(
+                self._get_assets_path(), "svg_defs", defs_filename
+            )
             defs_file = open(defs_file_path, "r")
             defs = defs_file.read()
             svg_defs += defs
@@ -204,7 +209,7 @@ class DiagramRenderer:
         image_defs = {}
         for filename in unique_images:
             mime_type, _ = mimetypes.guess_type(filename)
-            icon_path = os.path.join(get_assets_path(), "icons", filename)
+            icon_path = os.path.join(self._get_assets_path(), "icons", filename)
             if not os.path.exists(icon_path):
                 raise ValueError(f"Icon asset not found: {filename}")
 

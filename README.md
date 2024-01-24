@@ -14,6 +14,40 @@
 pip install draws
 ```
 
+## Example Usage (from cdk app)
+
+Add `Diagrams.of(app)` before `app.synth()`.
+
+_app.py:_
+
+```python
+from aws_cdk import App
+
+from draws import Diagrams
+from infra.api_to_s3_stack import ApiToS3Stack
+from infra.s3_bucket_stack import S3BucketStack
+
+app = App()
+
+bucket_stack = S3BucketStack(app, f"draws-dev-bucket", public_prefix="public")
+docs_ui_stack = ApiToS3Stack(app, f"draws-dev-docs-ui", bucket=bucket_stack.bucket)
+
+# Pass the cdk app into Diagrams.of() (directory defaults to app.py location)
+Diagrams.of(app, directory="examples/output")
+
+app.synth()
+```
+
+Run `cdk ls` to generate diagrams for each stack.
+
+_output:_
+
+```bash
+$ cdk ls
+Diagram saved to: examples/output/draws-dev-bucket.diagram.svg
+Diagram saved to: examples/output/draws-dev-docs-ui.diagram.svg
+```
+
 ## Example Usage (from template)
 
 ```python
